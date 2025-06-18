@@ -49,11 +49,15 @@ final class AccessTokenRepository implements AccessTokenRepositoryInterface
         if (null !== $userIdentifier && '' !== $userIdentifier) {
             $accessToken->setUserIdentifier($userIdentifier);
         }
+        // explode scopes to add them to the access token
 
+        // change to array from string
+        if (is_string($scopes)) {
+            $scopes = explode(' ', $scopes);
+        }
         foreach ($scopes as $scope) {
             $accessToken->addScope($scope);
         }
-
         return $accessToken;
     }
 

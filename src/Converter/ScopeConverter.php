@@ -8,6 +8,7 @@ use League\Bundle\OAuth2ServerBundle\Entity\Scope as ScopeEntity;
 use League\Bundle\OAuth2ServerBundle\ValueObject\Scope as ScopeModel;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 
+
 final class ScopeConverter implements ScopeConverterInterface
 {
     public function toDomain(ScopeEntityInterface $scope): ScopeModel

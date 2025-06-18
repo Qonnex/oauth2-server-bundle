@@ -22,7 +22,7 @@ final class Grant extends ImplodedArray
     }
 
     /**
-     * @param list<non-empty-string> $values
+     * @param list<string> $values
      *
      * @return list<GrantModel>
      */

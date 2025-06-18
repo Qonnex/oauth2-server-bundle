@@ -84,7 +84,6 @@ final class OAuth2Authenticator implements AuthenticatorInterface, Authenticatio
             if ('' === $userIdentifier || $oauthClientId === $userIdentifier) {
                 return new ClientCredentialsUser($oauthClientId);
             }
-
             return $this->userProvider->loadUserByIdentifier($userIdentifier);
         };
 

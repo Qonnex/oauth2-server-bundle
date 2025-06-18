@@ -8,7 +8,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\TextType;
 
 /**
- * @template T
+ * @psalm-template T
  */
 abstract class ImplodedArray extends TextType
 {
@@ -17,6 +17,9 @@ abstract class ImplodedArray extends TextType
      */
     private const VALUE_DELIMITER = ' ';
 
+    /**
+     * @psalm-suppress MixedArgumentTypeCoercion
+     */
     public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
     {
         if (!\is_array($value)) {
@@ -27,6 +30,7 @@ abstract class ImplodedArray extends TextType
             return null;
         }
 
+        /** @psalm-var T $item */
         foreach ($value as $item) {
             $this->assertValueCanBeImploded($item);
         }
@@ -35,7 +39,7 @@ abstract class ImplodedArray extends TextType
     }
 
     /**
-     * @return list<T>
+     * @psalm-return list<T>
      */
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): array
     {
@@ -64,7 +68,7 @@ abstract class ImplodedArray extends TextType
     }
 
     /**
-     * @param T $value
+     * @psalm-param T $value
      */
     private function assertValueCanBeImploded($value): void
     {

@@ -8,6 +8,9 @@ use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use League\Bundle\OAuth2ServerBundle\AuthorizationServer\GrantTypeInterface;
 use League\Bundle\OAuth2ServerBundle\Command\CreateClientCommand;
 use League\Bundle\OAuth2ServerBundle\Command\GenerateKeyPairCommand;
+use League\Bundle\OAuth2ServerBundle\ODM\Type\GrantOdm as GrantTypeODM;
+use League\Bundle\OAuth2ServerBundle\ODM\Type\RedirectUriOdm as RedirectUriTypeODM;
+use League\Bundle\OAuth2ServerBundle\ODM\Type\ScopeOdm as ScopeTypeODM;
 use League\Bundle\OAuth2ServerBundle\DBAL\Type\Grant as GrantType;
 use League\Bundle\OAuth2ServerBundle\DBAL\Type\RedirectUri as RedirectUriType;
 use League\Bundle\OAuth2ServerBundle\DBAL\Type\Scope as ScopeType;
@@ -95,23 +98,30 @@ final class LeagueOAuth2ServerExtension extends Extension implements PrependExte
      */
     public function prepend(ContainerBuilder $container)
     {
-        // If no doctrine connection is configured, the DBAL connection should
-        // be left alone as adding any configuration setting with no connection
-        // will result in an invalid configuration leading to a hard failure.
-        if (!self::hasDoctrineConnectionsConfigured($container->getExtensionConfig('doctrine'))) {
-            return;
+        // DBAL types (for relational databases)
+        if (self::hasDoctrineConnectionsConfigured($container->getExtensionConfig('doctrine'))) {
+            $container->prependExtensionConfig('doctrine', [
+                'dbal' => [
+                    'connections' => null,
+                    'types' => [
+                        'oauth2_grant' => GrantType::class,
+                        'oauth2_redirect_uri' => RedirectUriType::class,
+                        'oauth2_scope' => ScopeType::class,
+                    ],
+                ],
+            ]);
         }
 
-        $container->prependExtensionConfig('doctrine', [
-            'dbal' => [
-                'connections' => null,
+        // ODM types (for MongoDB)
+        if ($container->hasExtension('doctrine_mongodb')) {
+            $container->prependExtensionConfig('doctrine_mongodb', [
                 'types' => [
-                    'oauth2_grant' => GrantType::class,
-                    'oauth2_redirect_uri' => RedirectUriType::class,
-                    'oauth2_scope' => ScopeType::class,
+                    'oauth2_grant' => GrantTypeODM::class,
+                    'oauth2_redirect_uri' => RedirectUriTypeODM::class,
+                    'oauth2_scope' => ScopeTypeODM::class,
                 ],
-            ],
-        ]);
+            ]);
+        }
     }
 
     /**

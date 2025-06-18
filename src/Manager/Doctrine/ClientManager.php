@@ -4,85 +4,60 @@ declare(strict_types=1);
 
 namespace League\Bundle\OAuth2ServerBundle\Manager\Doctrine;
 
-use Doctrine\ORM\EntityManagerInterface;
-use League\Bundle\OAuth2ServerBundle\Event\PreSaveClientEvent;
+use Doctrine\Persistence\ObjectManager;
 use League\Bundle\OAuth2ServerBundle\Manager\ClientFilter;
 use League\Bundle\OAuth2ServerBundle\Manager\ClientManagerInterface;
-use League\Bundle\OAuth2ServerBundle\Model\AbstractClient;
-use League\Bundle\OAuth2ServerBundle\Model\ClientInterface;
-use League\Bundle\OAuth2ServerBundle\OAuth2Events;
-use League\Bundle\OAuth2ServerBundle\ValueObject\Grant;
-use League\Bundle\OAuth2ServerBundle\ValueObject\RedirectUri;
-use League\Bundle\OAuth2ServerBundle\ValueObject\Scope;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use League\Bundle\OAuth2ServerBundle\Model\Client;
 
 final class ClientManager implements ClientManagerInterface
 {
     /**
-     * @var EntityManagerInterface
+     * @var ObjectManager
      */
-    private $entityManager;
+    private $objectManager;
 
-    /**
-     * @var class-string<AbstractClient>
-     */
-    private $clientFqcn;
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-
-    /**
-     * @param class-string<AbstractClient> $clientFqcn
-     */
-    public function __construct(
-        EntityManagerInterface $entityManager,
-        EventDispatcherInterface $dispatcher,
-        string $clientFqcn,
-    ) {
-        $this->entityManager = $entityManager;
-        $this->dispatcher = $dispatcher;
-        $this->clientFqcn = $clientFqcn;
-    }
-
-    public function find(string $identifier): ?ClientInterface
+    public function __construct(ObjectManager $objectManager)
     {
-        $repository = $this->entityManager->getRepository($this->clientFqcn);
-
-        return $repository->findOneBy(['identifier' => $identifier]);
-    }
-
-    public function save(ClientInterface $client): void
-    {
-        $event = $this->dispatcher->dispatch(new PreSaveClientEvent($client), OAuth2Events::PRE_SAVE_CLIENT);
-        $client = $event->getClient();
-
-        $this->entityManager->persist($client);
-        $this->entityManager->flush();
-    }
-
-    public function remove(ClientInterface $client): void
-    {
-        $this->entityManager->remove($client);
-        $this->entityManager->flush();
+        $this->objectManager = $objectManager;
     }
 
     /**
-     * @return list<AbstractClient>
+     * {@inheritdoc}
+     */
+    public function find(string $identifier): ?Client
+    {
+        return $this->objectManager->find(Client::class, $identifier);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function save(\League\Bundle\OAuth2ServerBundle\Model\ClientInterface $client): void
+    {
+        $this->objectManager->persist($client);
+        $this->objectManager->flush();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove(\League\Bundle\OAuth2ServerBundle\Model\ClientInterface $client): void
+    {
+        $this->objectManager->remove($client);
+        $this->objectManager->flush();
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function list(?ClientFilter $clientFilter): array
     {
-        $repository = $this->entityManager->getRepository($this->clientFqcn);
+        $repository = $this->objectManager->getRepository(Client::class);
         $criteria = self::filterToCriteria($clientFilter);
 
-        /** @var list<AbstractClient> */
         return $repository->findBy($criteria);
     }
 
-    /**
-     * @return array{grants?: list<Grant>, redirect_uris?: list<RedirectUri>, scopes?: list<Scope>}
-     */
     private static function filterToCriteria(?ClientFilter $clientFilter): array
     {
         if (null === $clientFilter || false === $clientFilter->hasFilters()) {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace League\Bundle\OAuth2ServerBundle\Manager\Doctrine;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ObjectManager;
 use League\Bundle\OAuth2ServerBundle\Manager\RefreshTokenManagerInterface;
 use League\Bundle\OAuth2ServerBundle\Model\RefreshToken;
 use League\Bundle\OAuth2ServerBundle\Model\RefreshTokenInterface;
@@ -12,34 +12,47 @@ use League\Bundle\OAuth2ServerBundle\Model\RefreshTokenInterface;
 final class RefreshTokenManager implements RefreshTokenManagerInterface
 {
     /**
-     * @var EntityManagerInterface
+     * @var ObjectManager
      */
-    private $entityManager;
+    private $objectManager;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(ObjectManager $objectManager)
     {
-        $this->entityManager = $entityManager;
+        $this->objectManager = $objectManager;
     }
 
     public function find(string $identifier): ?RefreshTokenInterface
     {
-        return $this->entityManager->find(RefreshToken::class, $identifier);
+        return $this->objectManager->find(RefreshToken::class, $identifier);
     }
 
     public function save(RefreshTokenInterface $refreshToken): void
     {
-        $this->entityManager->persist($refreshToken);
-        $this->entityManager->flush();
+        $this->objectManager->persist($refreshToken);
+        $this->objectManager->flush();
     }
 
     public function clearExpired(): int
     {
-        /** @var int */
-        return $this->entityManager->createQueryBuilder()
-            ->delete(RefreshToken::class, 'rt')
-            ->where('rt.expiry < :expiry')
-            ->setParameter('expiry', new \DateTimeImmutable(), 'datetime_immutable')
-            ->getQuery()
-            ->execute();
+        // ORM-specific: use DQL
+        if (method_exists($this->objectManager, 'createQueryBuilder')) {
+            /** @var int */
+            return $this->objectManager->createQueryBuilder()
+                ->delete(RefreshToken::class, 'rt')
+                ->where('rt.expiry < :expiry')
+                ->setParameter('expiry', new \DateTimeImmutable(), 'datetime_immutable')
+                ->getQuery()
+                ->execute();
+        }
+
+        // ODM-specific: use repository
+        $repository = $this->objectManager->getRepository(RefreshToken::class);
+        $expiredTokens = $repository->findBy(['expiry' => ['$lt' => new \DateTimeImmutable()]]);
+        foreach ($expiredTokens as $token) {
+            $this->objectManager->remove($token);
+        }
+        $this->objectManager->flush();
+
+        return count($expiredTokens);
     }
 }

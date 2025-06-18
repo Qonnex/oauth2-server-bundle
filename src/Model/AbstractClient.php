@@ -13,21 +13,21 @@ use League\Bundle\OAuth2ServerBundle\ValueObject\Scope;
  */
 abstract class AbstractClient implements ClientInterface
 {
-    private string $name;
+    protected string $name = '';
     /** @var non-empty-string */
     protected string $identifier;
-    private ?string $secret;
+    protected ?string $secret;
 
     /** @var list<RedirectUri> */
-    private array $redirectUris = [];
+    protected array $redirectUris = [];
 
     /** @var list<Grant> */
-    private array $grants = [];
+    protected array $grants = [];
 
     /** @var list<Scope> */
-    private array $scopes = [];
+    protected array $scopes = [];
 
-    private bool $active = true;
+    protected bool $active = true;
     private bool $allowPlainTextPkce = false;
 
     /**

@@ -11,32 +11,32 @@ class AccessToken implements AccessTokenInterface
     /**
      * @var string
      */
-    private $identifier;
+    protected $identifier;
 
     /**
      * @var \DateTimeInterface
      */
-    private $expiry;
+    protected $expiry;
 
     /**
      * @var string|null
      */
-    private $userIdentifier;
+    protected $userIdentifier;
 
     /**
      * @var ClientInterface
      */
-    private $client;
+    protected $client;
 
     /**
      * @var list<Scope>
      */
-    private $scopes;
+    protected $scopes;
 
     /**
      * @var bool
      */
-    private $revoked = false;
+    protected $revoked = false;
 
     /**
      * @param list<Scope> $scopes

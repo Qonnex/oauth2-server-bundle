@@ -80,7 +80,7 @@ final class ScopeRepository implements ScopeRepositoryInterface
         $client = $this->clientManager->find($clientEntity->getIdentifier());
 
         $scopes = $this->setupScopes($client, $this->scopeConverter->toDomainArray(array_values($scopes)));
-
+        $scopes = array_map(fn($scope) => $scope instanceof Scope ? $scope : new Scope($scope), $scopes);
         $event = $this->eventDispatcher->dispatch(
             new ScopeResolveEvent(
                 $scopes,
